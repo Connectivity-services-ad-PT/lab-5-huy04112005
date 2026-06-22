@@ -1,0 +1,818 @@
+{
+  "info": {
+    "name": "Pair04 Notification Service Contract Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01_Functional",
+      "item": [
+        {
+          "name": "Check Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response is JSON and matches HealthStatus schema\", function () {",
+                  "    pm.response.to.be.json;",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property(\"status\", \"ok\");",
+                  "    pm.expect(body).to.have.property(\"service\");",
+                  "    pm.expect(body).to.have.property(\"time\");",
+                  "    pm.expect(Date.parse(body.time)).to.not.be.NaN;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST {{baseUrl}}/events/alerts (Gửi sự kiện cảnh báo mới)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"alert.created\",\n  \"eventId\": \"0196fb3d-4ad7-7d1e-9f49-5d5148d2bfff\",\n  \"source\": \"core-business\",\n  \"alertId\": \"0196fb3d-4ad7-7d1e-9f49-5d5148d2bbbf\",\n  \"severity\": \"HIGH\",\n  \"message\": \"Camera detected unauthorized entry in building B\",\n  \"occurredAt\": \"2026-05-28T00:30:00Z\",\n  \"correlationId\": \"0196fb3d-4ad7-7d1e-9f49-5d5148d2cccf\",\n  \"details\": {\n    \"location\": \"Building B, 2nd Floor\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events/alerts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events",
+                "alerts"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Response has eventId and acceptedAt\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property(\"eventId\");",
+                  "    pm.expect(json).to.have.property(\"acceptedAt\");",
+                  "    pm.environment.set(\"savedEventId\", json.eventId);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET {{baseUrl}}/events/{eventId} (Truy vấn chi tiết & trạng thái gửi tin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events/{{savedEventId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events",
+                "{{savedEventId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// If mock environment, use the pre-seeded eventId, else use the created one",
+                  "if (pm.environment.get(\"env\") === \"mock\") {",
+                  "    pm.environment.set(\"savedEventId\", \"0196fb3d-4ad7-7d1e-9f49-5d5148d2babc\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response contains delivery history (Send notification / Retry status)\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property(\"event\");",
+                  "    pm.expect(json).to.have.property(\"deliveries\");",
+                  "    pm.expect(json.deliveries).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Events History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events/history?limit=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response conforms to AlertEventPage schema\", function () {",
+                  "    pm.response.to.be.json;",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property(\"items\");",
+                  "    pm.expect(body).to.have.property(\"nextCursor\");",
+                  "    pm.expect(body).to.have.property(\"hasMore\");",
+                  "    pm.expect(body.items).to.be.an(\"array\");",
+                  "    if (pm.environment.get(\"env\") === \"local\") {",
+                  "        pm.expect(body.items.length).to.be.greaterThan(0);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02_Auth",
+      "item": [
+        {
+          "name": "POST {{baseUrl}}/events/alerts (Thiếu Token)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"alert.created\",\n  \"eventId\": \"0196fb3d-4ad7-7d1e-9f49-5d5148d2bfff\",\n  \"source\": \"core-business\",\n  \"alertId\": \"0196fb3d-4ad7-7d1e-9f49-5d5148d2bbbf\",\n  \"severity\": \"HIGH\",\n  \"message\": \"Camera detected unauthorized entry in building B\",\n  \"occurredAt\": \"2026-05-28T00:30:00Z\",\n  \"correlationId\": \"0196fb3d-4ad7-7d1e-9f49-5d5148d2cccf\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events/alerts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events",
+                "alerts"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Unauthorized request returns 401\", function () {",
+                  "    pm.expect(pm.response.code).to.equal(401);",
+                  "});",
+                  "pm.test(\"Error follows ProblemDetails schema\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.status).to.equal(401);",
+                  "    pm.expect(json).to.have.property(\"type\");",
+                  "    pm.expect(json).to.have.property(\"title\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invalid Token Signature (Local Only)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer invalid-token-signature",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events/history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events",
+                "history"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.environment.get(\"env\") === \"mock\") {",
+                  "    pm.test.skip(\"Skip signature check in mock server (stateless)\");",
+                  "} else {",
+                  "    pm.test(\"Status code is 401 Unauthorized for signature mismatch\", function () {",
+                  "        pm.response.to.have.status(401);",
+                  "        const body = pm.response.json();",
+                  "        pm.expect(body.status).to.eql(401);",
+                  "        pm.expect(body.detail).to.include(\"Chữ ký Bearer token không hợp lệ.\");",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Expired Token (Local Only)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer invalid-token-expired",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events/history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events",
+                "history"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.environment.get(\"env\") === \"mock\") {",
+                  "    pm.test.skip(\"Skip expiration check in mock server\");",
+                  "} else {",
+                  "    pm.test(\"Status code is 401 Unauthorized for expired token\", function () {",
+                  "        pm.response.to.have.status(401);",
+                  "        const body = pm.response.json();",
+                  "        pm.expect(body.status).to.eql(401);",
+                  "        pm.expect(body.detail).to.include(\"Bearer token đã hết hạn.\");",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Forbidden Access Token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer forbidden-token",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events/history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events",
+                "history"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.environment.get(\"env\") === \"mock\") {",
+                  "    pm.test.skip(\"Skip role authorization check in mock server\");",
+                  "} else {",
+                  "    pm.test(\"Status code is 403 Forbidden\", function () {",
+                  "        pm.response.to.have.status(403);",
+                  "        const body = pm.response.json();",
+                  "        pm.expect(body.status).to.eql(403);",
+                  "        pm.expect(body.detail).to.include(\"Client không được phân quyền ghi nhận sự kiện cảnh báo.\");",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03_Negative",
+      "item": [
+        {
+          "name": "POST {{baseUrl}}/events/alerts (Invalid Channel / Sai định dạng UUID)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"alert.created\",\n  \"eventId\": \"123\",\n  \"source\": \"core-business\",\n  \"alertId\": \"invalid-alert-id\",\n  \"severity\": \"HIGH\",\n  \"message\": \"Valid length message\",\n  \"occurredAt\": \"2026-05-28T00:30:00Z\",\n  \"correlationId\": \"invalid-correlation-id\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events/alerts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events",
+                "alerts"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.environment.get(\"env\") === \"mock\") {",
+                  "    pm.test(\"Status code is 422 Unprocessable Entity (Mock Validation)\", function () {",
+                  "        pm.response.to.have.status(422);",
+                  "    });",
+                  "} else {",
+                  "    pm.test(\"Invalid data returns 400 Bad Request\", function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "    pm.test(\"ProblemDetails contains specific validation errors\", function () {",
+                  "        const json = pm.response.json();",
+                  "        pm.expect(json.status).to.equal(400);",
+                  "        pm.expect(json).to.have.property(\"errors\");",
+                  "        pm.expect(json.errors).to.be.an('array').that.is.not.empty;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST {{baseUrl}}/events/alerts (Unprocessable Entity - Tương lai)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"alert.created\",\n  \"eventId\": \"0196fb3d-4ad7-7d1e-9f49-5d5148d2ba00\",\n  \"source\": \"core-business\",\n  \"alertId\": \"0196fb3d-4ad7-7d1e-9f49-5d5148d2ba01\",\n  \"severity\": \"HIGH\",\n  \"message\": \"Future date verification test\",\n  \"occurredAt\": \"2030-12-31T23:59:59Z\",\n  \"correlationId\": \"0196fb3d-4ad7-7d1e-9f49-5d5148d2ba02\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events/alerts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events",
+                "alerts"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.environment.get(\"env\") === \"mock\") {",
+                  "    pm.test.skip(\"Skip future date business logic check in mock environment\");",
+                  "} else {",
+                  "    pm.test(\"Business rule violation returns 422\", function () {",
+                  "        pm.response.to.have.status(422);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Non-Existent Event (404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events/0196fb3d-0000-0000-0000-5d5148d2babc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events",
+                "0196fb3d-0000-0000-0000-5d5148d2babc"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.environment.get(\"env\") === \"mock\") {",
+                  "    pm.test.skip(\"Skip 404 test in stateless mock environment\");",
+                  "} else {",
+                  "    pm.test(\"Status code is 404 Not Found\", function () {",
+                  "        pm.response.to.have.status(404);",
+                  "    });",
+                  "    pm.test(\"Response conforms to ProblemDetails 404 error\", function () {",
+                  "        const body = pm.response.json();",
+                  "        pm.expect(body.status).to.eql(404);",
+                  "        pm.expect(body.title).to.include(\"Không tìm thấy tài nguyên\");",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04_Boundary_Reliability",
+      "item": [
+        {
+          "name": "POST {{baseUrl}}/events/alerts (Dedupe - Kiểm tra chống trùng lặp)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"alert.created\",\n  \"eventId\": \"0196fb3d-4ad7-7d1e-9f49-5d5148d2bfff\",\n  \"source\": \"core-business\",\n  \"alertId\": \"0196fb3d-4ad7-7d1e-9f49-5d5148d2bbbf\",\n  \"severity\": \"HIGH\",\n  \"message\": \"Camera detected unauthorized entry in building B\",\n  \"occurredAt\": \"2026-05-28T00:30:00Z\",\n  \"correlationId\": \"0196fb3d-4ad7-7d1e-9f49-5d5148d2cccf\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events/alerts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events",
+                "alerts"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.environment.get(\"env\") === \"mock\") {",
+                  "    pm.test.skip(\"Skip duplicate dedupe check in mock\");",
+                  "} else {",
+                  "    pm.test(\"Duplicate event ID returns 409 Conflict (Dedupe check)\", function () {",
+                  "        pm.response.to.have.status(409);",
+                  "    });",
+                  "    pm.test(\"Conflict error provides detail\", function () {",
+                  "        const json = pm.response.json();",
+                  "        pm.expect(json.status).to.equal(409);",
+                  "        pm.expect(json.detail).to.be.a('string');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "History - Limit boundary (limit=0)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events/history?limit=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.environment.get(\"env\") === \"mock\") {",
+                  "    pm.test(\"Status code is 400 Bad Request (Mock Validation)\", function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "} else {",
+                  "    pm.test(\"Status code is 400 Bad Request for limit boundary\", function () {",
+                  "        pm.response.to.have.status(400);",
+                  "        const body = pm.response.json();",
+                  "        pm.expect(body.status).to.eql(400);",
+                  "        pm.expect(body.errors.some(e => e.field === \"limit\")).to.be.true;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "History - Limit boundary (limit=101)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events/history?limit=101",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "101"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.environment.get(\"env\") === \"mock\") {",
+                  "    pm.test(\"Status code is 400 Bad Request (Mock Validation)\", function () {",
+                  "        pm.response.to.have.status(400);",
+                  "    });",
+                  "} else {",
+                  "    pm.test(\"Status code is 400 Bad Request for limit boundary\", function () {",
+                  "        pm.response.to.have.status(400);",
+                  "        const body = pm.response.json();",
+                  "        pm.expect(body.status).to.eql(400);",
+                  "        pm.expect(body.errors.some(e => e.field === \"limit\")).to.be.true;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05_Consumer_side_Smoke",
+      "item": [
+        {
+          "name": "GET {{coreMockUrl}}/alerts/{alertId} (Upstream Alert Mock)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{coreMockUrl}}/alerts/0196fb3d-4ad7-7d1e-9f49-5d5148d2babd",
+              "host": [
+                "{{coreMockUrl}}"
+              ],
+              "path": [
+                "alerts",
+                "0196fb3d-4ad7-7d1e-9f49-5d5148d2babd"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Can successfully reach upstream Core service mock\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06_Local_only_NonFunctional",
+      "item": [
+        {
+          "name": "Performance SLA - Health (Local Only)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.environment.get(\"env\") === \"mock\") {",
+                  "    pm.test.skip(\"Skip performance SLA verification in mock environment\");",
+                  "} else {",
+                  "    pm.test(\"Response time is within acceptable limits (< 200ms)\", function () {",
+                  "        pm.expect(pm.response.responseTime).to.be.below(200);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Performance SLA - History (Local Only)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events/history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events",
+                "history"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.environment.get(\"env\") === \"mock\") {",
+                  "    pm.test.skip(\"Skip performance SLA verification in mock environment\");",
+                  "} else {",
+                  "    pm.test(\"Response time is within acceptable limits (< 200ms)\", function () {",
+                  "        pm.expect(pm.response.responseTime).to.be.below(200);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

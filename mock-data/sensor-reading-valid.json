@@ -1,0 +1,13 @@
+{
+  "eventType": "alert.created",
+  "eventId": "0196fb3d-4ad7-7d1e-9f49-5d5148d2bfff",
+  "source": "core-business",
+  "alertId": "0196fb3d-4ad7-7d1e-9f49-5d5148d2bbbf",
+  "severity": "HIGH",
+  "message": "Camera detected unauthorized entry in building B",
+  "occurredAt": "2026-05-28T00:30:00Z",
+  "correlationId": "0196fb3d-4ad7-7d1e-9f49-5d5148d2cccf",
+  "details": {
+    "location": "Building B, 2nd Floor"
+  }
+}

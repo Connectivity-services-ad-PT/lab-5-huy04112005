@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="FIT4110 Lab04 IoT Docker Verification" tests="11" time="0.090">
+  <testsuite name="01_Functional / GET health returns 200" id="9d510f8a-3ebc-4e13-a71f-b1474aa3b915" timestamp="2026-06-04T02:05:30.661Z" tests="3" failures="0" errors="0" time="0.031">
+    <testcase name="Status code is 200" time="0.031" classname="01FunctionalGetHealthReturns200"/>
+    <testcase name="Response has status ok" time="0.031" classname="01FunctionalGetHealthReturns200"/>
+    <testcase name="Response has service name and version" time="0.031" classname="01FunctionalGetHealthReturns200"/>
+  </testsuite>
+  <testsuite name="01_Functional / POST valid temperature reading returns 201" id="697c6cbe-f778-4276-9065-566032c2523f" timestamp="2026-06-04T02:05:30.661Z" tests="3" failures="0" errors="0" time="0.021">
+    <testcase name="Status code is 201" time="0.021" classname="01FunctionalPostValidTemperatureReadingReturns201"/>
+    <testcase name="Response follows created-reading schema" time="0.021" classname="01FunctionalPostValidTemperatureReadingReturns201"/>
+    <testcase name="Response device_id matches request" time="0.021" classname="01FunctionalPostValidTemperatureReadingReturns201"/>
+  </testsuite>
+  <testsuite name="01_Functional / GET latest readings returns items array" id="ded3d888-5680-4778-ba8b-d9dd1e8f427e" timestamp="2026-06-04T02:05:30.661Z" tests="2" failures="0" errors="0" time="0.009">
+    <testcase name="Status code is 200" time="0.009" classname="01FunctionalGetLatestReadingsReturnsItemsArray"/>
+    <testcase name="Response has items array" time="0.009" classname="01FunctionalGetLatestReadingsReturnsItemsArray"/>
+  </testsuite>
+  <testsuite name="01_Functional / GET reading by saved reading_id returns 200" id="21a97b67-46f9-4189-98ef-16ce0196779a" timestamp="2026-06-04T02:05:30.661Z" tests="2" failures="0" errors="0" time="0.003">
+    <testcase name="Status code is 200" time="0.003" classname="01FunctionalGetReadingBySavedReadingIdReturns200"/>
+    <testcase name="Response reading_id matches saved variable" time="0.003" classname="01FunctionalGetReadingBySavedReadingIdReturns200"/>
+  </testsuite>
+  <testsuite name="02_Auth / POST reading without token returns 401" id="1c4a5898-c7db-4fef-ab76-a5373c9b2b27" timestamp="2026-06-04T02:05:30.661Z" tests="1" failures="0" errors="0" time="0.006">
+    <testcase name="Missing token returns 401" time="0.006" classname="02AuthPostReadingWithoutTokenReturns401"/>
+  </testsuite>
+  <testsuite name="02_Auth / POST reading with wrong token returns 401" id="99892b1b-224d-40e5-a45e-befcc52191a5" timestamp="2026-06-04T02:05:30.661Z" tests="1" failures="1" errors="1" time="0.002">
+    <system-err><![CDATA[Iteration: 0
+
+---
+testScriptError: Error: expected { reading_id: 'R-20260513-1234', …(4) } to have property 'type'
+    at assertProblemDetails (eval at exec (evalmachine.<anonymous>:66:1819788), <anonymous>:10:29)
+    at Object.eval (eval at exec (evalmachine.<anonymous>:66:1819788), <anonymous>:16:3)
+    at u.exec (evalmachine.<anonymous>:66:1819823)
+    at t.exports (evalmachine.<anonymous>:66:5848)
+    at Object.<anonymous> (evalmachine.<anonymous>:66:8247)
+    at evalmachine.<anonymous>:15:26
+    at Array.forEach (<anonymous>)
+    at Object.emit (evalmachine.<anonymous>:14:59)
+    at evalmachine.<anonymous>:59:24
+    at evalmachine.<anonymous>:5:21
+---
+]]></system-err>
+    <testcase name="Wrong token returns 401" time="0.002" classname="02AuthPostReadingWithWrongTokenReturns401">
+      <failure type="AssertionFailure" message="expected response to have status code 401 but got 201">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: dc75de1b-e992-49fd-9c5f-ea947e9b1b12.]]>
+        <![CDATA[Collection name: FIT4110 Lab04 IoT Docker Verification.]]>
+        <![CDATA[Request name: 02_Auth / POST reading with wrong token returns 401.]]>
+        <![CDATA[Test description: Wrong token returns 401.]]>
+        <![CDATA[Error message: expected response to have status code 401 but got 201.]]>
+        <![CDATA[Stacktrace: AssertionError: expected response to have status code 401 but got 201
+   at Object.eval sandbox-script.js:1:6).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="03_Negative / POST reading missing device_id returns validation error" id="fd8f420d-09b4-46e9-b66d-84305bb98d77" timestamp="2026-06-04T02:05:30.661Z" tests="1" failures="0" errors="0" time="0.008">
+    <testcase name="Missing required field returns 422" time="0.008" classname="03NegativePostReadingMissingDeviceIdReturnsValidationError"/>
+  </testsuite>
+  <testsuite name="03_Negative / POST reading with value as string returns validation error" id="06a08ba9-c6dd-44c5-ad06-ba53de39c314" timestamp="2026-06-04T02:05:30.661Z" tests="1" failures="0" errors="0" time="0.004">
+    <testcase name="Wrong data type returns 422" time="0.004" classname="03NegativePostReadingWithValueAsStringReturnsValidationError"/>
+  </testsuite>
+  <testsuite name="04_Boundary_Reliability / POST boundary temperature 80 is accepted with warning" id="31620240-baf4-4bf6-8544-f866c6eb8434" timestamp="2026-06-04T02:05:30.661Z" tests="2" failures="0" errors="0" time="0.001">
+    <testcase name="Boundary value 80 returns 201" time="0.001" classname="04BoundaryReliabilityPostBoundaryTemperature80IsAcceptedWithWarning"/>
+    <testcase name="High temperature response includes warning header" time="0.001" classname="04BoundaryReliabilityPostBoundaryTemperature80IsAcceptedWithWarning"/>
+  </testsuite>
+  <testsuite name="04_Boundary_Reliability / POST boundary temperature 81 is rejected" id="241cb24e-78aa-4f8c-8f1e-32f333e605bd" timestamp="2026-06-04T02:05:30.661Z" tests="1" failures="0" errors="0" time="0.002">
+    <testcase name="Boundary value 81 returns 422" time="0.002" classname="04BoundaryReliabilityPostBoundaryTemperature81IsRejected"/>
+  </testsuite>
+  <testsuite name="04_Boundary_Reliability / GET health responds under 1000ms on local/container" id="e473c83b-d14b-41ec-8ce0-893793e10c2b" timestamp="2026-06-04T02:05:30.661Z" tests="2" failures="0" errors="0" time="0.003">
+    <testcase name="Response time is below 1000ms" time="0.003" classname="04BoundaryReliabilityGetHealthRespondsUnder1000MsOnLocalContainer"/>
+    <testcase name="Health endpoint is reachable" time="0.003" classname="04BoundaryReliabilityGetHealthRespondsUnder1000MsOnLocalContainer"/>
+  </testsuite>
+</testsuites>

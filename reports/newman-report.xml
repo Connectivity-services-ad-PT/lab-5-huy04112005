@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Pair04 Notification Service Contract Tests" tests="17" time="0.184">
+  <testsuite name="01_Functional / Check Health" id="3496898c-ee72-417a-a498-4f8e9b89030d" timestamp="2026-05-28T02:16:02.328Z" tests="2" failures="0" errors="0" time="0.055">
+    <testcase name="Status code is 200 OK" time="0.055" classname="01FunctionalCheckHealth"/>
+    <testcase name="Response is JSON and matches HealthStatus schema" time="0.055" classname="01FunctionalCheckHealth"/>
+  </testsuite>
+  <testsuite name="01_Functional / POST {{baseUrl}}/events/alerts (Gửi sự kiện cảnh báo mới)" id="c0631f6d-2cbb-4f22-9bb7-499b9f7809a3" timestamp="2026-05-28T02:16:02.328Z" tests="2" failures="0" errors="0" time="0.010">
+    <testcase name="Status code is 201 Created" time="0.010" classname="01FunctionalPostBaseUrlEventsAlertsGiSKinCnhBaoMi"/>
+    <testcase name="Response has eventId and acceptedAt" time="0.010" classname="01FunctionalPostBaseUrlEventsAlertsGiSKinCnhBaoMi"/>
+  </testsuite>
+  <testsuite name="01_Functional / GET {{baseUrl}}/events/{eventId} (Truy vấn chi tiết &amp; trạng thái gửi tin)" id="efb1a4e0-e7e6-4b92-911f-f8197a89219a" timestamp="2026-05-28T02:16:02.328Z" tests="2" failures="0" errors="0" time="0.005">
+    <testcase name="Status code is 200 OK" time="0.005" classname="01FunctionalGetBaseUrlEventsEventIdTruyVnChiTitAmpTrngThaiGiTin"/>
+    <testcase name="Response contains delivery history (Send notification / Retry status)" time="0.005" classname="01FunctionalGetBaseUrlEventsEventIdTruyVnChiTitAmpTrngThaiGiTin"/>
+  </testsuite>
+  <testsuite name="01_Functional / Get Events History" id="f792e510-544f-499f-b283-144b955b915a" timestamp="2026-05-28T02:16:02.328Z" tests="2" failures="0" errors="0" time="0.006">
+    <testcase name="Status code is 200 OK" time="0.006" classname="01FunctionalGetEventsHistory"/>
+    <testcase name="Response conforms to AlertEventPage schema" time="0.006" classname="01FunctionalGetEventsHistory"/>
+  </testsuite>
+  <testsuite name="02_Auth / POST {{baseUrl}}/events/alerts (Thiếu Token)" id="585ecb1f-938c-4f79-9f97-8f7df90bcde3" timestamp="2026-05-28T02:16:02.328Z" tests="2" failures="0" errors="0" time="0.007">
+    <testcase name="Unauthorized request returns 401" time="0.007" classname="02AuthPostBaseUrlEventsAlertsThiuToken"/>
+    <testcase name="Error follows ProblemDetails schema" time="0.007" classname="02AuthPostBaseUrlEventsAlertsThiuToken"/>
+  </testsuite>
+  <testsuite name="02_Auth / Invalid Token Signature (Local Only)" id="83db233f-0fe2-43a0-bc60-fbb7419393fd" timestamp="2026-05-28T02:16:02.328Z" tests="1" failures="0" errors="0" time="0.004">
+    <testcase name="Status code is 401 Unauthorized for signature mismatch" time="0.004" classname="02AuthInvalidTokenSignatureLocalOnly"/>
+  </testsuite>
+  <testsuite name="02_Auth / Expired Token (Local Only)" id="8bd2eb09-d114-4f9c-940a-8fce83f55401" timestamp="2026-05-28T02:16:02.328Z" tests="1" failures="0" errors="0" time="0.002">
+    <testcase name="Status code is 401 Unauthorized for expired token" time="0.002" classname="02AuthExpiredTokenLocalOnly"/>
+  </testsuite>
+  <testsuite name="02_Auth / Forbidden Access Token" id="94c3ec2d-20e6-4a63-8f22-cf997c9575c2" timestamp="2026-05-28T02:16:02.328Z" tests="1" failures="0" errors="0" time="0.004">
+    <testcase name="Status code is 403 Forbidden" time="0.004" classname="02AuthForbiddenAccessToken"/>
+  </testsuite>
+  <testsuite name="03_Negative / POST {{baseUrl}}/events/alerts (Invalid Channel / Sai định dạng UUID)" id="274f9d26-2058-482e-a0d1-d32f6f49713d" timestamp="2026-05-28T02:16:02.328Z" tests="2" failures="0" errors="0" time="0.002">
+    <testcase name="Invalid data returns 400 Bad Request" time="0.002" classname="03NegativePostBaseUrlEventsAlertsInvalidChannelSaiDnhDngUuid"/>
+    <testcase name="ProblemDetails contains specific validation errors" time="0.002" classname="03NegativePostBaseUrlEventsAlertsInvalidChannelSaiDnhDngUuid"/>
+  </testsuite>
+  <testsuite name="03_Negative / POST {{baseUrl}}/events/alerts (Unprocessable Entity - Tương lai)" id="01628520-3358-4bc2-8245-abb379379961" timestamp="2026-05-28T02:16:02.328Z" tests="1" failures="0" errors="0" time="0.005">
+    <testcase name="Business rule violation returns 422" time="0.005" classname="03NegativePostBaseUrlEventsAlertsUnprocessableEntityTngLai"/>
+  </testsuite>
+  <testsuite name="03_Negative / Get Non-Existent Event (404)" id="e2f84b3c-5b10-4815-9e14-78d5ff6b91c4" timestamp="2026-05-28T02:16:02.328Z" tests="2" failures="0" errors="0" time="0.004">
+    <testcase name="Status code is 404 Not Found" time="0.004" classname="03NegativeGetNonExistentEvent404"/>
+    <testcase name="Response conforms to ProblemDetails 404 error" time="0.004" classname="03NegativeGetNonExistentEvent404"/>
+  </testsuite>
+  <testsuite name="04_Boundary_Reliability / POST {{baseUrl}}/events/alerts (Dedupe - Kiểm tra chống trùng lặp)" id="c988919f-f7cd-457f-a7fa-c02c9f6784ca" timestamp="2026-05-28T02:16:02.328Z" tests="2" failures="0" errors="0" time="0.004">
+    <testcase name="Duplicate event ID returns 409 Conflict (Dedupe check)" time="0.004" classname="04BoundaryReliabilityPostBaseUrlEventsAlertsDedupeKimTraChngTrungLp"/>
+    <testcase name="Conflict error provides detail" time="0.004" classname="04BoundaryReliabilityPostBaseUrlEventsAlertsDedupeKimTraChngTrungLp"/>
+  </testsuite>
+  <testsuite name="04_Boundary_Reliability / History - Limit boundary (limit=0)" id="c553eddb-e930-4304-8542-370bb39893f0" timestamp="2026-05-28T02:16:02.328Z" tests="1" failures="0" errors="0" time="0.001">
+    <testcase name="Status code is 400 Bad Request for limit boundary" time="0.001" classname="04BoundaryReliabilityHistoryLimitBoundaryLimit0"/>
+  </testsuite>
+  <testsuite name="04_Boundary_Reliability / History - Limit boundary (limit=101)" id="31510865-12b1-49b0-ad91-2ab13dfd7872" timestamp="2026-05-28T02:16:02.328Z" tests="1" failures="0" errors="0" time="0.004">
+    <testcase name="Status code is 400 Bad Request for limit boundary" time="0.004" classname="04BoundaryReliabilityHistoryLimitBoundaryLimit101"/>
+  </testsuite>
+  <testsuite name="05_Consumer_side_Smoke / GET {{coreMockUrl}}/alerts/{alertId} (Upstream Alert Mock)" id="11aa7fa0-6ab1-4b12-b842-9a97c7be281b" timestamp="2026-05-28T02:16:02.328Z" tests="1" failures="0" errors="0" time="0.066">
+    <testcase name="Can successfully reach upstream Core service mock" time="0.066" classname="05ConsumerSideSmokeGetCoreMockUrlAlertsAlertIdUpstreamAlertMock"/>
+  </testsuite>
+  <testsuite name="06_Local_only_NonFunctional / Performance SLA - Health (Local Only)" id="01faf145-5cfe-44eb-a018-b99e29bf1e47" timestamp="2026-05-28T02:16:02.328Z" tests="1" failures="0" errors="0" time="0.003">
+    <testcase name="Response time is within acceptable limits (&lt; 200ms)" time="0.003" classname="06LocalOnlyNonFunctionalPerformanceSlaHealthLocalOnly"/>
+  </testsuite>
+  <testsuite name="06_Local_only_NonFunctional / Performance SLA - History (Local Only)" id="59967f8f-771f-4f39-bc43-d36fdb5d40e6" timestamp="2026-05-28T02:16:02.328Z" tests="1" failures="0" errors="0" time="0.002">
+    <testcase name="Response time is within acceptable limits (&lt; 200ms)" time="0.002" classname="06LocalOnlyNonFunctionalPerformanceSlaHistoryLocalOnly"/>
+  </testsuite>
+</testsuites>

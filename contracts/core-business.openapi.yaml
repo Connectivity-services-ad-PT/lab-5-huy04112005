@@ -1,0 +1,42 @@
+openapi: 3.1.0
+info:
+  title: Smart Campus — Core Business Mock Contract
+  version: 1.0.0
+  description: Minimal mock contract for Core Business service to support consumer smoke testing.
+paths:
+  /alerts/{alertId}:
+    get:
+      summary: Get details of an business alert
+      parameters:
+        - name: alertId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Alert details
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [alertId, severity, status, message]
+                properties:
+                  alertId:
+                    type: string
+                    format: uuid
+                  severity:
+                    type: string
+                    enum: [LOW, MEDIUM, HIGH, CRITICAL]
+                  status:
+                    type: string
+                  message:
+                    type: string
+              examples:
+                success:
+                  value:
+                    alertId: 0196fb3d-4ad7-7d1e-9f49-5d5148d2babd
+                    severity: HIGH
+                    status: ACTIVE
+                    message: "Phát hiện chuyển động bất thường tại khu vực Server Room"

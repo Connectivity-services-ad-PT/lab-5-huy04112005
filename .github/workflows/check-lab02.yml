@@ -1,0 +1,71 @@
+name: Check Lab 02 OpenAPI repo
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  structure-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check required files
+        run: |
+          test -f README.md
+          test -f openapi.yaml
+          test -f campus-spectral.yaml
+          test -f negotiation-log.md
+          test -f VERSIONING.md
+          test -f package.json
+          test -f docs/lab02-guide.md
+          test -f docs/pairing-matrix.md
+          test -f docs/openapi-authoring-guide.md
+          test -f docs/swagger-online-workflow.md
+          test -f docs/event-contract-template.md
+          test -f docs/analysis-provider.md
+          test -f docs/analysis-consumer.md
+          test -f evidence/buoi-02/README.md
+          test -f evidence/buoi-02/checklist.md
+          test -f evidence/buoi-02/known-issues.md
+          test -f user-stories/README.md
+          test -f user-stories/pair-01-camera-ai-vision.md
+          test -f user-stories/pair-02-core-ai-vision.md
+          test -f user-stories/pair-03-core-access-gate.md
+          test -f user-stories/pair-04-core-notification-async.md
+          test -f user-stories/pair-05-iot-core-async.md
+          test -f user-stories/pair-06-iot-analytics-async.md
+          test -f user-stories/pair-07-camera-analytics-async.md
+          test -f user-stories/pair-08-core-analytics-async.md
+          test -f user-stories/pair-09-access-analytics-async.md
+          test -f user-stories/pair-10-access-core-policy.md
+          test -f scripts/install_lab02_cli.sh
+          test -f scripts/lint_openapi.sh
+          test -f scripts/mock_openapi.sh
+          test -f scripts/test_mock_with_curl.sh
+          test -f scripts/collect_session02_evidence.sh
+
+      - name: Shell syntax check
+        run: |
+          bash -n scripts/install_lab02_cli.sh
+          bash -n scripts/lint_openapi.sh
+          bash -n scripts/mock_openapi.sh
+          bash -n scripts/test_mock_with_curl.sh
+          bash -n scripts/collect_session02_evidence.sh
+
+      - name: Ensure no Word or PowerPoint documents are committed
+        run: |
+          if find . \( -iname "*.doc" -o -iname "*.docx" -o -iname "*.ppt" -o -iname "*.pptx" \) | grep -q .; then
+            echo "Office documents are not allowed in the student repo."
+            find . \( -iname "*.doc" -o -iname "*.docx" -o -iname "*.ppt" -o -iname "*.pptx" \)
+            exit 1
+          fi
+
+      - name: Check OpenAPI version
+        run: |
+          grep -q "openapi: 3.1.0" openapi.yaml
+
+      - name: Install Spectral and lint template
+        run: |
+          npm install -g @stoplight/spectral-cli@6.11.1
+          spectral lint openapi.yaml --ruleset campus-spectral.yaml

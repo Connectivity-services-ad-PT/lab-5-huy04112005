@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="FIT4110 Lab04 IoT Docker Verification" tests="11" time="0.123">
+  <testsuite name="01_Functional / GET health returns 200" id="62ab244e-f07b-4d49-8fae-9bbf6a6464a3" timestamp="2026-06-17T03:06:22.276Z" tests="3" failures="0" errors="0" time="0.035">
+    <testcase name="Status code is 200" time="0.035" classname="Fit4110Lab04IoTDockerVerification"/>
+    <testcase name="Response has status ok" time="0.035" classname="Fit4110Lab04IoTDockerVerification"/>
+    <testcase name="Response has service name and version" time="0.035" classname="Fit4110Lab04IoTDockerVerification"/>
+  </testsuite>
+  <testsuite name="01_Functional / POST valid temperature reading returns 201" id="85493947-f262-484b-904b-4889bcca5221" timestamp="2026-06-17T03:06:22.276Z" tests="3" failures="0" errors="0" time="0.031">
+    <testcase name="Status code is 201" time="0.031" classname="Fit4110Lab04IoTDockerVerification"/>
+    <testcase name="Response follows created-reading schema" time="0.031" classname="Fit4110Lab04IoTDockerVerification"/>
+    <testcase name="Response device_id matches request" time="0.031" classname="Fit4110Lab04IoTDockerVerification"/>
+  </testsuite>
+  <testsuite name="01_Functional / GET latest readings returns items array" id="ab3e17da-bbe9-499b-a159-d2faebfd631c" timestamp="2026-06-17T03:06:22.276Z" tests="2" failures="0" errors="0" time="0.008">
+    <testcase name="Status code is 200" time="0.008" classname="Fit4110Lab04IoTDockerVerification"/>
+    <testcase name="Response has items array" time="0.008" classname="Fit4110Lab04IoTDockerVerification"/>
+  </testsuite>
+  <testsuite name="01_Functional / GET reading by saved reading_id returns 200" id="5602eb45-e2a2-48b9-81bb-f6e2b4675515" timestamp="2026-06-17T03:06:22.276Z" tests="2" failures="0" errors="0" time="0.007">
+    <testcase name="Status code is 200" time="0.007" classname="Fit4110Lab04IoTDockerVerification"/>
+    <testcase name="Response reading_id matches saved variable" time="0.007" classname="Fit4110Lab04IoTDockerVerification"/>
+  </testsuite>
+  <testsuite name="02_Auth / POST reading without token returns 401" id="94907997-9712-433d-b7ce-ce919b3aef90" timestamp="2026-06-17T03:06:22.276Z" tests="1" failures="0" errors="0" time="0.005">
+    <testcase name="Missing token returns 401" time="0.005" classname="Fit4110Lab04IoTDockerVerification"/>
+  </testsuite>
+  <testsuite name="02_Auth / POST reading with wrong token returns 401" id="3b3740bd-4d60-4bb5-aaf4-a543af18ba5c" timestamp="2026-06-17T03:06:22.276Z" tests="1" failures="0" errors="0" time="0.002">
+    <testcase name="Wrong token returns 401" time="0.002" classname="Fit4110Lab04IoTDockerVerification"/>
+  </testsuite>
+  <testsuite name="03_Negative / POST reading missing device_id returns validation error" id="85e6a03c-ec3a-4451-b7be-1dc1ff95c4bb" timestamp="2026-06-17T03:06:22.276Z" tests="1" failures="0" errors="0" time="0.003">
+    <testcase name="Missing required field returns 422" time="0.003" classname="Fit4110Lab04IoTDockerVerification"/>
+  </testsuite>
+  <testsuite name="03_Negative / POST reading with value as string returns validation error" id="11c16a98-767c-453a-8424-8e2591e6a245" timestamp="2026-06-17T03:06:22.276Z" tests="1" failures="0" errors="0" time="0.004">
+    <testcase name="Wrong data type returns 422" time="0.004" classname="Fit4110Lab04IoTDockerVerification"/>
+  </testsuite>
+  <testsuite name="04_Boundary_Reliability / POST boundary temperature 80 is accepted with warning" id="d35f2c69-69dd-4b55-87bc-fbfcce670402" timestamp="2026-06-17T03:06:22.276Z" tests="2" failures="0" errors="0" time="0.021">
+    <testcase name="Boundary value 80 returns 201" time="0.021" classname="Fit4110Lab04IoTDockerVerification"/>
+    <testcase name="High temperature response includes warning header" time="0.021" classname="Fit4110Lab04IoTDockerVerification"/>
+  </testsuite>
+  <testsuite name="04_Boundary_Reliability / POST boundary temperature 81 is rejected" id="1ef0b093-7e9e-4cc5-bccb-e7bb90176fde" timestamp="2026-06-17T03:06:22.276Z" tests="1" failures="0" errors="0" time="0.005">
+    <testcase name="Boundary value 81 returns 422" time="0.005" classname="Fit4110Lab04IoTDockerVerification"/>
+  </testsuite>
+  <testsuite name="04_Boundary_Reliability / GET health responds under 1000ms on local/container" id="88c44198-72ab-486d-bfe2-4712e1fd82f8" timestamp="2026-06-17T03:06:22.276Z" tests="2" failures="0" errors="0" time="0.002">
+    <testcase name="Response time is below 1000ms" time="0.002" classname="Fit4110Lab04IoTDockerVerification"/>
+    <testcase name="Health endpoint is reachable" time="0.002" classname="Fit4110Lab04IoTDockerVerification"/>
+  </testsuite>
+</testsuites>

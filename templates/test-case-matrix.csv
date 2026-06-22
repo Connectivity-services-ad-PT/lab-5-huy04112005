@@ -1,0 +1,18 @@
+Test Case ID,Request Type,Folder,Description,Input Payload,Expected Status,Expected Assertions,Tested Environment
+TC_FUNC_01,GET /health,01_Functional,Check service health,None,200,"status='ok', service, time formatted",Both
+TC_FUNC_02,POST /events/alerts,01_Functional,Gửi sự kiện cảnh báo mới,Valid JSON AlertCreatedEvent,201,"eventId returned, acceptedAt matches ISO 8601, sets savedEventId",Both
+TC_FUNC_03,GET /events/{eventId},01_Functional,Truy vấn chi tiết & trạng thái gửi tin,None,200,"event matches savedEventId, deliveries array present",Both
+TC_FUNC_04,GET /events/history,01_Functional,Get Events History,None,200,"items array returned, nextCursor and hasMore present",Both
+TC_AUTH_01,POST /events/alerts,02_Auth,Thiếu Token,Valid JSON,401,"status=401, type, title (ProblemDetails)",Both
+TC_AUTH_02,GET /events/history,02_Auth,Invalid Token Signature,None,401,"Chữ ký Bearer token không hợp lệ (RFC 9457)",Local Only
+TC_AUTH_03,GET /events/history,02_Auth,Expired Token,None,401,"Bearer token đã hết hạn (RFC 9457)",Local Only
+TC_AUTH_04,GET /events/history,02_Auth,Forbidden Access Token,None,403,"Client không được phân quyền (RFC 9457)",Both
+TC_NEG_01,POST /events/alerts,03_Negative,Invalid Channel / Sai định dạng UUID,JSON with invalid UUIDs,400,"errors contains INVALID_FORMAT errors (RFC 9457)",Both
+TC_NEG_02,POST /events/alerts,03_Negative,Unprocessable Entity - Tương lai,JSON with future occurredAt,422,"Thời gian occurredAt không thể nằm ở tương lai (RFC 9457)",Local Only
+TC_NEG_03,GET /events/{eventId},03_Negative,Get Non-Existent Event (404),None,404,"status=404, Không tìm thấy tài nguyên (RFC 9457)",Both
+TC_BND_01,POST /events/alerts,04_Boundary_Reliability,Dedupe - Kiểm tra chống trùng lặp,Duplicate valid JSON,409,"Sự kiện cảnh báo với Event ID này đã được ghi nhận (RFC 9457 check)",Local Only
+TC_BND_02,GET /events/history,04_Boundary_Reliability,History - Limit boundary (limit=0),None,400,"errors contains limit field INVALID_RANGE",Both
+TC_BND_03,GET /events/history,04_Boundary_Reliability,History - Limit boundary (limit=101),None,400,"errors contains limit field INVALID_RANGE",Both
+TC_SMK_01,GET /alerts/{alertId},05_Consumer_side_Smoke,Upstream Alert Mock,None,200,"Can successfully reach upstream Core service mock",Both
+TC_SLA_01,GET /health,06_Local_only_NonFunctional,Performance SLA - Health,None,200,response time < 200ms,Local Only
+TC_SLA_02,GET /events/history,06_Local_only_NonFunctional,Performance SLA - History,None,200,response time < 200ms,Local Only

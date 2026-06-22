@@ -1,0 +1,10 @@
+{
+  "eventType": "alert.created",
+  "eventId": "0196fb3d-4ad7-7d1e-9f49-5d5148d2ba00",
+  "source": "core-business",
+  "alertId": "0196fb3d-4ad7-7d1e-9f49-5d5148d2ba01",
+  "severity": "HIGH",
+  "message": "Future date verification test",
+  "occurredAt": "2099-12-31T23:59:59Z",
+  "correlationId": "0196fb3d-4ad7-7d1e-9f49-5d5148d2ba02"
+}

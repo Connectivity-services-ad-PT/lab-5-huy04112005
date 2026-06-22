@@ -1,0 +1,705 @@
+openapi: 3.1.0
+info:
+  title: Smart Campus — Core Business ↔ Notification Async Contract
+  version: 1.0.0
+  description: |
+    Hợp đồng API giữa dịch vụ Core Business (Producer) và Notification Service (Consumer)
+    dùng cho hệ thống Smart Campus Operations Platform.
+    
+    Quy định cách thức gửi nhận sự kiện cảnh báo qua hàng đợi sự kiện (event broker)
+    và các API truy vấn lịch sử cảnh báo đồng bộ.
+  contact:
+    name: FIT4110 Pair 04 Team
+    email: pair04@example.edu.vn
+servers:
+  - url: http://localhost:4010
+    description: Prism mock server
+  - url: https://api.campus.local
+    description: Class network production server
+tags:
+  - name: health
+    description: Kiểm tra trạng thái hoạt động của dịch vụ
+  - name: events
+    description: Quản lý và xử lý các sự kiện cảnh báo đa kênh
+security:
+  - bearerAuth: []
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Kiểm tra trạng thái service
+      description: Endpoint kiểm tra xem dịch vụ Notification có đang hoạt động bình thường không.
+      tags: [health]
+      security: []
+      responses:
+        '200':
+          description: Dịch vụ hoạt động bình thường
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+              examples:
+                ok:
+                  value:
+                    status: ok
+                    service: notification-service
+                    time: '2026-05-22T07:30:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /events/alerts:
+    post:
+      operationId: publishAlertEvent
+      summary: Gửi sự kiện cảnh báo mới
+      description: |
+        Được gọi bởi Core Business để gửi sự kiện cảnh báo (tạo mới, leo thang, hoặc đã xử lý)
+        vào hệ thống thông báo đa kênh.
+      tags: [events]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertEvent'
+            examples:
+              alertCreated:
+                summary: Sự kiện cảnh báo mới được tạo
+                value:
+                  eventType: alert.created
+                  eventId: 0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+                  source: core-business
+                  alertId: 0196fb3d-4ad7-7d1e-9f49-5d5148d2babd
+                  severity: HIGH
+                  message: Phát hiện chuyển động bất thường tại khu vực Server Room
+                  occurredAt: '2026-05-22T07:30:00Z'
+                  correlationId: 0196fb3d-4ad7-7d1e-9f49-5d5148d2babe
+                  details:
+                    deviceId: CAM-SERVER-01
+                    location: Tòa nhà A, Tầng 3
+              alertEscalated:
+                summary: Sự kiện cảnh báo được leo thang
+                value:
+                  eventType: alert.escalated
+                  eventId: 0196fb3d-4ad7-7d1e-9f49-5d5148d2bac0
+                  source: core-business
+                  alertId: 0196fb3d-4ad7-7d1e-9f49-5d5148d2babd
+                  severity: CRITICAL
+                  escalatedReason: Không có phản hồi xác nhận từ nhân viên an ninh trực ca sau 5 phút
+                  occurredAt: '2026-05-22T07:35:00Z'
+                  correlationId: 0196fb3d-4ad7-7d1e-9f49-5d5148d2babe
+                  previousEventId: 0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+              alertResolved:
+                summary: Sự kiện cảnh báo đã được giải quyết
+                value:
+                  eventType: alert.resolved
+                  eventId: 0196fb3d-4ad7-7d1e-9f49-5d5148d2bac1
+                  source: core-business
+                  alertId: 0196fb3d-4ad7-7d1e-9f49-5d5148d2babd
+                  resolutionReason: Kỹ thuật viên đã kiểm tra hiện trường, xác nhận lỗi cảm biến hồng ngoại
+                  occurredAt: '2026-05-22T07:40:00Z'
+                  correlationId: 0196fb3d-4ad7-7d1e-9f49-5d5148d2babe
+                  resolvedAt: '2026-05-22T07:39:30Z'
+      responses:
+        '201':
+          description: Sự kiện đã được nhận và đưa vào hàng đợi xử lý thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventAccepted'
+              examples:
+                success:
+                  value:
+                    eventId: 0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+                    acceptedAt: '2026-05-22T07:30:02Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /events/history:
+    get:
+      operationId: getEventHistory
+      summary: Lấy lịch sử sự kiện cảnh báo
+      description: |
+        Lấy danh sách các sự kiện cảnh báo đã nhận, hỗ trợ phân trang sử dụng cursor-based pagination.
+      tags: [events]
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Lấy danh sách lịch sử sự kiện thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertEventPage'
+              examples:
+                firstPage:
+                  value:
+                    items:
+                      - eventType: alert.created
+                        eventId: 0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+                        source: core-business
+                        alertId: 0196fb3d-4ad7-7d1e-9f49-5d5148d2babd
+                        severity: HIGH
+                        message: Phát hiện chuyển động bất thường tại khu vực Server Room
+                        occurredAt: '2026-05-22T07:30:00Z'
+                        correlationId: 0196fb3d-4ad7-7d1e-9f49-5d5148d2babe
+                        details:
+                          deviceId: CAM-SERVER-01
+                    nextCursor: 'eyJwYWdlIjoyLCJzdGFydElkIjoiMDE5NmZiM2QtNGFkNy03ZDFlLTlmNDktNWQ1MTQ4ZDJiYmMifQ'
+                    hasMore: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /events/{eventId}:
+    get:
+      operationId: getEventById
+      summary: Chi tiết một sự kiện cảnh báo
+      description: Truy vấn thông tin chi tiết của một sự kiện cảnh báo kèm lịch sử gửi tin theo Event UUID.
+      tags: [events]
+      parameters:
+        - $ref: '#/components/parameters/EventId'
+      responses:
+        '200':
+          description: Chi tiết sự kiện cảnh báo và các lượt gửi tin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertEventDetail'
+              examples:
+                detail:
+                  value:
+                    event:
+                      eventType: alert.created
+                      eventId: 0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+                      source: core-business
+                      alertId: 0196fb3d-4ad7-7d1e-9f49-5d5148d2babd
+                      severity: HIGH
+                      message: Phát hiện chuyển động bất thường tại khu vực Server Room
+                      occurredAt: '2026-05-22T07:30:00Z'
+                      correlationId: 0196fb3d-4ad7-7d1e-9f49-5d5148d2babe
+                      details:
+                        deviceId: CAM-SERVER-01
+                    deliveries:
+                      - channel: TELEGRAM
+                        deliveryId: 0196fb3d-4ad7-7d1e-9f49-5d5148d2bac5
+                        alertId: 0196fb3d-4ad7-7d1e-9f49-5d5148d2babd
+                        status: SUCCESS
+                        sentAt: '2026-05-22T07:30:05Z'
+                        chatId: '-100123456789'
+                        message: '[HIGH] Phát hiện chuyển động bất thường tại khu vực Server Room'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    EventId:
+      name: eventId
+      in: path
+      required: true
+      description: UUID duy nhất định danh sự kiện (Event ID)
+      schema:
+        type: string
+        format: uuid
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      description: Cursor mã hóa base64 để truy vấn trang tiếp theo.
+      schema:
+        oneOf:
+          - type: string
+            minLength: 1
+            maxLength: 500
+          - type: 'null'
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: Số lượng phần tử tối đa trả về trong một trang.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  schemas:
+    HealthStatus:
+      type: object
+      additionalProperties: false
+      required: [status, service, time]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+          description: Trạng thái của dịch vụ.
+          example: ok
+        service:
+          type: string
+          minLength: 2
+          maxLength: 80
+          description: Tên dịch vụ hiện tại.
+          example: notification-service
+        time:
+          type: string
+          format: date-time
+          description: Thời gian kiểm tra trạng thái dịch vụ (định dạng UTC ISO 8601).
+          example: '2026-05-22T07:30:00Z'
+
+    EventAccepted:
+      type: object
+      additionalProperties: false
+      required: [eventId, acceptedAt]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: UUID của sự kiện vừa được đưa vào hàng đợi xử lý.
+        acceptedAt:
+          type: string
+          format: date-time
+          description: Thời điểm hệ thống ghi nhận sự kiện thành công (UTC).
+
+    AlertEventPage:
+      type: object
+      additionalProperties: false
+      required: [items, nextCursor, hasMore]
+      properties:
+        items:
+          type: array
+          minItems: 0
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/AlertEvent'
+        nextCursor:
+          type: [string, 'null']
+          description: Cursor cho trang kế tiếp, null nếu không còn dữ liệu.
+          example: 'eyJvZmZzZXQiOjEwfQ=='
+        hasMore:
+          type: boolean
+          description: Cờ đánh dấu xem còn dữ liệu ở các trang tiếp theo hay không.
+
+    AlertEventDetail:
+      type: object
+      additionalProperties: false
+      required: [event, deliveries]
+      properties:
+        event:
+          $ref: '#/components/schemas/AlertEvent'
+        deliveries:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationDelivery'
+          description: Danh sách các kênh và trạng thái gửi tin nhắn tương ứng.
+
+    AlertEvent:
+      oneOf:
+        - $ref: '#/components/schemas/AlertCreatedEvent'
+        - $ref: '#/components/schemas/AlertEscalatedEvent'
+        - $ref: '#/components/schemas/AlertResolvedEvent'
+      discriminator:
+        propertyName: eventType
+
+    AlertBaseEvent:
+      type: object
+      required: [eventId, source, alertId, occurredAt, correlationId]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: ID duy nhất định danh sự kiện.
+        source:
+          type: string
+          minLength: 2
+          maxLength: 80
+          pattern: '^[a-z0-9-]+$'
+          description: Dịch vụ phát sinh sự kiện.
+          example: core-business
+        alertId:
+          type: string
+          format: uuid
+          description: ID duy nhất của cảnh báo nghiệp vụ đi kèm.
+        occurredAt:
+          type: string
+          format: date-time
+          description: Thời điểm xảy ra sự kiện theo giờ chuẩn UTC.
+        correlationId:
+          type: string
+          format: uuid
+          description: ID dùng để liên kết chuỗi sự kiện nghiệp vụ liên quan.
+
+    AlertCreatedEvent:
+      allOf:
+        - $ref: '#/components/schemas/AlertBaseEvent'
+        - type: object
+          required: [eventType, severity, message]
+          properties:
+            eventType:
+              type: string
+              enum: [alert.created]
+            severity:
+              $ref: '#/components/schemas/AlertSeverity'
+            message:
+              type: string
+              minLength: 5
+              maxLength: 500
+              description: Nội dung thông điệp cảnh báo.
+            details:
+              type: object
+              additionalProperties: true
+              description: Chi tiết cấu hình hoặc dữ liệu mở rộng tùy chọn.
+
+    AlertEscalatedEvent:
+      allOf:
+        - $ref: '#/components/schemas/AlertBaseEvent'
+        - type: object
+          required: [eventType, severity, escalatedReason, previousEventId]
+          properties:
+            eventType:
+              type: string
+              enum: [alert.escalated]
+            severity:
+              $ref: '#/components/schemas/AlertSeverity'
+            escalatedReason:
+              type: string
+              minLength: 5
+              maxLength: 500
+              description: Lý do sự kiện cảnh báo bị leo thang mức độ nghiêm trọng.
+            previousEventId:
+              type: string
+              format: uuid
+              description: ID của sự kiện tạo cảnh báo trước đó.
+
+    AlertResolvedEvent:
+      allOf:
+        - $ref: '#/components/schemas/AlertBaseEvent'
+        - type: object
+          required: [eventType, resolutionReason, resolvedAt]
+          properties:
+            eventType:
+              type: string
+              enum: [alert.resolved]
+            resolutionReason:
+              type: string
+              minLength: 5
+              maxLength: 500
+              description: Lý do cảnh báo được giải quyết.
+            resolvedAt:
+              oneOf:
+                - type: string
+                  format: date-time
+                - type: 'null'
+              description: Thời điểm thực tế cảnh báo được xử lý xong.
+
+    AlertSeverity:
+      type: string
+      enum: [LOW, MEDIUM, HIGH, CRITICAL]
+      description: Mức độ nghiêm trọng của sự kiện cảnh báo.
+
+    NotificationDelivery:
+      oneOf:
+        - $ref: '#/components/schemas/EmailDelivery'
+        - $ref: '#/components/schemas/PushDelivery'
+        - $ref: '#/components/schemas/TelegramDelivery'
+      discriminator:
+        propertyName: channel
+
+    BaseDelivery:
+      type: object
+      required: [deliveryId, alertId, status, sentAt]
+      properties:
+        deliveryId:
+          type: string
+          format: uuid
+        alertId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [PENDING, SUCCESS, FAILED]
+        sentAt:
+          type: string
+          format: date-time
+        errorDetail:
+          oneOf:
+            - type: string
+              maxLength: 500
+            - type: 'null'
+
+    EmailDelivery:
+      allOf:
+        - $ref: '#/components/schemas/BaseDelivery'
+        - type: object
+          required: [channel, recipientEmail, subject, body]
+          properties:
+            channel:
+              type: string
+              enum: [EMAIL]
+            recipientEmail:
+              type: string
+              format: email
+            subject:
+              type: string
+              minLength: 3
+              maxLength: 200
+            body:
+              type: string
+              minLength: 1
+              maxLength: 5000
+
+    PushDelivery:
+      allOf:
+        - $ref: '#/components/schemas/BaseDelivery'
+        - type: object
+          required: [channel, recipientUserId, title, body]
+          properties:
+            channel:
+              type: string
+              enum: [PUSH]
+            recipientUserId:
+              type: string
+              minLength: 1
+              maxLength: 80
+            deviceToken:
+              oneOf:
+                - type: string
+                  maxLength: 256
+                - type: 'null'
+            title:
+              type: string
+              minLength: 1
+              maxLength: 100
+            body:
+              type: string
+              minLength: 1
+              maxLength: 1000
+
+    TelegramDelivery:
+      allOf:
+        - $ref: '#/components/schemas/BaseDelivery'
+        - type: object
+          required: [channel, chatId, message]
+          properties:
+            channel:
+              type: string
+              enum: [TELEGRAM]
+            chatId:
+              type: string
+              minLength: 1
+              maxLength: 80
+            message:
+              type: string
+              minLength: 1
+              maxLength: 4096
+
+    Problem:
+      type: object
+      additionalProperties: false
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          format: uri
+          description: URI tham chiếu định nghĩa chi tiết loại lỗi (chuẩn RFC 9457).
+          example: https://campus.local/errors/validation
+        title:
+          type: string
+          minLength: 3
+          maxLength: 120
+          description: Tiêu đề tóm tắt ngắn gọn của lỗi.
+          example: Dữ liệu không hợp lệ
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+          description: HTTP status code được trả về.
+          example: 400
+        detail:
+          oneOf:
+            - type: string
+              maxLength: 500
+            - type: 'null'
+          description: Chi tiết nguyên nhân xảy ra lỗi cụ thể.
+          example: Định dạng UUID của field eventId không chính xác.
+        instance:
+          oneOf:
+            - type: string
+              format: uri
+            - type: 'null'
+          description: URI của endpoint thực hiện request gây lỗi.
+          example: https://campus.local/errors/validation
+        errors:
+          type: array
+          minItems: 0
+          maxItems: 50
+          items:
+            type: object
+            additionalProperties: false
+            required: [field, code, message]
+            properties:
+              field:
+                type: string
+                minLength: 1
+                maxLength: 80
+                example: eventId
+              code:
+                type: string
+                minLength: 2
+                maxLength: 80
+                example: INVALID_FORMAT
+              message:
+                type: string
+                minLength: 3
+                maxLength: 200
+                example: eventId phải đúng định dạng UUID.
+
+  responses:
+    BadRequest:
+      description: Yêu cầu không hợp lệ hoặc sai định dạng schema JSON
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://campus.local/errors/validation
+            title: Dữ liệu không hợp lệ
+            status: 400
+            detail: Payload không đáp ứng các ràng buộc JSON Schema.
+            instance: https://campus.local/events/alerts
+            errors:
+              - field: eventId
+                code: INVALID_FORMAT
+                message: eventId phải đúng định dạng UUID.
+
+    Unauthorized:
+      description: Thiếu thông tin xác thực hoặc Bearer token hết hạn/không hợp lệ
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://campus.local/errors/unauthorized
+            title: Chưa xác thực quyền truy cập
+            status: 401
+            detail: Không có Bearer JWT token hợp lệ trong header Authorization.
+            instance: https://campus.local/events/history
+            errors: []
+
+    Forbidden:
+      description: Quyền truy cập bị từ chối đối với Client hiện tại
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://campus.local/errors/forbidden
+            title: Quyền truy cập bị từ chối
+            status: 403
+            detail: Client không được phân quyền ghi nhận sự kiện cảnh báo.
+            instance: https://campus.local/events/alerts
+            errors: []
+
+    NotFound:
+      description: Không tìm thấy sự kiện cảnh báo theo Event ID được yêu cầu
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://campus.local/errors/not-found
+            title: Không tìm thấy tài nguyên
+            status: 404
+            detail: Không tìm thấy sự kiện cảnh báo với Event ID được cung cấp.
+            instance: https://campus.local/events/0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+            errors: []
+
+    Conflict:
+      description: Trùng lặp Event ID (Idempotency key check fail)
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://campus.local/errors/conflict
+            title: Xung đột tài nguyên dữ liệu
+            status: 409
+            detail: Sự kiện cảnh báo với Event ID này đã được ghi nhận trước đó trên hệ thống.
+            instance: https://campus.local/events/alerts
+            errors: []
+
+    UnprocessableEntity:
+      description: Dữ liệu đúng định dạng schema nhưng vi phạm ràng buộc nghiệp vụ
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://campus.local/errors/unprocessable
+            title: Vi phạm nghiệp vụ
+            status: 422
+            detail: Thời gian occurredAt không thể nằm ở tương lai so với thời gian hiện tại của server.
+            instance: https://campus.local/events/alerts
+            errors: []
+
+    InternalServerError:
+      description: Lỗi hệ thống không lường trước phía server
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://campus.local/errors/internal
+            title: Lỗi hệ thống nội bộ
+            status: 500
+            detail: Máy chủ gặp sự cố khi xử lý ghi hàng đợi.
+            instance: https://campus.local/events/alerts
+            errors: []
+
+    TooManyRequests:
+      description: Yêu cầu bị giới hạn tần suất (Rate Limit Exceeded)
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://campus.local/errors/rate-limit
+            title: Quá nhiều yêu cầu
+            status: 429
+            detail: Bạn đã vượt quá tần suất gửi sự kiện cho phép. Vui lòng thử lại sau.
+            instance: https://campus.local/events/alerts
+            errors: []
